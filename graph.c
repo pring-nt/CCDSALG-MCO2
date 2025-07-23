@@ -10,9 +10,9 @@ GROUP NUMBER : 45
 /*
     Purpose: Creates and initializes a graph structure with a specified number of vertices.
     Returns: Pointer to the created Graph struct.
-    @param  : numVertices — number of vertices the graph will contain
+    @param  : numVertices - number of vertices the graph will contain
     Pre-condition:
-             - numVertices must be ≥ 0 and ≤ MAX_VERTICES (as defined elsewhere).
+             - numVertices must be >= 0 and <= MAX_VERTICES (as defined elsewhere).
     Post-condition:
              - A dynamically allocated Graph* is returned.
              - The adjacency matrix and vertex name array are allocated and initialized to 0.
@@ -53,12 +53,12 @@ Graph* createGraph(int numVertices) {
 /*
     Purpose: Assigns a vertex name to the next available index in the graph, or returns an existing index.
     Returns: Index of the vertex in the graph’s vertexNames array.
-    @param  : g         — pointer to the Graph
-    @param  : name      — vertex name to assign
-    @param  : nextIndex — pointer to the next available index in the vertexNames array
+    @param  : g         - pointer to the Graph
+    @param  : name      - vertex name to assign
+    @param  : nextIndex - pointer to the next available index in the vertexNames array
     Pre-condition:
              - g must not be NULL.
-             - name must be a valid, null-terminated string of ≤ 8 characters.
+             - name must be a valid, null-terminated string of <= 8 characters.
              - *nextIndex must be within bounds (i.e., < g->numVertices).
     Post-condition:
              - If the name exists, its existing index is returned.
@@ -71,7 +71,7 @@ int assignVertex(Graph* g, strName name, int* nextIndex) {
     if (idx != -1) return idx;
 
     if (*nextIndex >= g->numVertices) {
-        fprintf(stderr, "Too many vertices.\n");
+        fprintf(stderr, "Error: Too many vertices.\n");
         exit(1);
     }
 
@@ -84,8 +84,8 @@ int assignVertex(Graph* g, strName name, int* nextIndex) {
 /*
     Purpose: Returns the index of a vertex name in the graph’s vertexNames array.
     Returns: Index of the vertex if found; -1 if not found.
-    @param  : g    — pointer to the Graph
-    @param  : name — name of the vertex to search for
+    @param  : g    - pointer to the Graph
+    @param  : name - name of the vertex to search for
     Pre-condition:
              - g must not be NULL.
              - name must be a valid, null-terminated string.
@@ -104,9 +104,9 @@ int getVertexIndex(Graph* g, strName name) {
 /*
     Purpose: Adds an undirected edge between two vertices in the graph.
     Returns: void
-    @param  : g    — pointer to the Graph
-    @param  : src  — source vertex name
-    @param  : dest — destination vertex name
+    @param  : g    - pointer to the Graph
+    @param  : src  - source vertex name
+    @param  : dest - destination vertex name
     Pre-condition:
              - g must not be NULL.
              - Both src and dest must already exist in g->vertexNames.
@@ -129,7 +129,7 @@ void addEdge(Graph* g, strName src, strName dest) {
 /*
     Purpose: Frees all memory associated with the graph.
     Returns: void
-    @param  : g — pointer to the Graph to free
+    @param  : g - pointer to the Graph to free
     Pre-condition:
              - g must not be NULL.
     Post-condition:
