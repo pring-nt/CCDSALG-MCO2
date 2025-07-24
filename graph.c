@@ -8,139 +8,229 @@ GROUP NUMBER : 45
 #include "graph.h"
 
 /*
-    Purpose: Creates and initializes a graph structure with a specified number of vertices.
-    Returns: Pointer to the created Graph struct.
-    @param  : numVertices - number of vertices the graph will contain
+    Purpose: Reads a graph from a text file and constructs its adjacency lists.
+    Returns: 1 if successful; 0 on failure (e.g., file not found or memory error).
+    @param  : strInputFileName — name of the input file containing graph data
+    @param  : GDS              — address of a Graph* to populate
     Pre-condition:
-             - numVertices must be >= 0 and <= MAX_VERTICES (as defined elsewhere).
+             - strInputFileName must be a valid, null‑terminated string.
+             - GDS must be non‑NULL.
     Post-condition:
-             - A dynamically allocated Graph* is returned.
-             - The adjacency matrix and vertex name array are allocated and initialized to 0.
-             - If memory allocation fails, the program exits with an error.
+             - *GDS points to a newly created Graph whose adjacency lists
+               reflect the file’s contents.
+             - File pointer is closed before returning.
+             - On failure, *GDS is left unmodified.
 */
-Graph* createGraph(int numVertices) {
-    Graph* g = malloc(sizeof(Graph));
-    if (g == NULL) {
-        fprintf(stderr, "Error: MEMORY ALLOCATION FAILED!");
-        exit(1);
+int ReadInputFile(strFile strInputFileName, Graph** GDS) {
+    // 1) Open the file
+    FILE* fp = fopen(strInputFileName, "r");
+    if (fp == NULL) {
+        return 0; // can’t open file
     }
 
-    g->numVertices = numVertices;
+    // 2) Read number of vertices
+    int numVertex;
+    fscanf(fp, "%d", &numVertex);
 
-    g->vertexNames = calloc(numVertices, sizeof(strName));
-    if (g->vertexNames == NULL) {
-        fprintf(stderr, "Error: MEMORY ALLOCATION FAILED!");
-        exit(1);
+    // 3) Create the graph skeleton (lists initialized empty)
+    Graph* newGraph = createGraph(numVertex);
+    if (!newGraph) {
+        fclose(fp);
+        return 0;
     }
 
-    g->adjMatrix = malloc(numVertices * sizeof(int*));
-    if (g->adjMatrix == NULL) {
-        fprintf(stderr, "Error: MEMORY ALLOCATION FAILED!");
-        exit(1);
-    }
+    strName token;
+    strName flag = "-1";      // sentinel marking end of one vertex’s neighbors
+    int i, exitFlag;
+    
+    // 4) For each vertex, read its line of adjacency info
+    for (i = 0; i < numVertex; i++) {
+        exitFlag = 0;
 
-    for (int i = 0; i < numVertices; i++) {
-        g->adjMatrix[i] = calloc(numVertices, sizeof(int));
-        if (g->adjMatrix[i] == NULL) {
-            fprintf(stderr, "Error: MEMORY ALLOCATION FAILED!");
-            exit(1);
+        // 4a) First token is the vertex’s own label
+        fscanf(fp, "%s", token);
+        appendNode(&newGraph->adjList[i], token);
+
+        // 4b) Subsequent tokens are neighbors until we hit "-1"
+        while (!exitFlag) {
+            fscanf(fp, "%s", token);
+            if (strcmp(token, flag) != 0) {
+                appendNode(&newGraph->adjList[i], token);
+            } else {
+                exitFlag = 1; // done with this vertex’s neighbor list
+            }
         }
     }
 
+    // 5) Hand the new graph back to the caller
+    *GDS = newGraph;
+    fclose(fp);
+    return 1;
+}
+
+
+/*
+    Purpose: Allocates and initializes a new adjacency-list node.
+    Returns: Pointer to the new Node.
+    @param  : name — vertex name to store in the node
+    Pre-condition:
+             - name must be ≤ MAX_LABEL_LEN‑1 chars, null‑terminated.
+    Post-condition:
+             - A Node is malloc’d, vertexName set, edge = NULL.
+             - Program exits on malloc failure.
+*/
+Node* createNode(strName name) {
+    Node* n = malloc(sizeof(Node));
+    if (!n) {
+        fprintf(stderr, "Error: MEMORY ALLOCATION FAILED!\n");
+        exit(1);
+    }
+    // copy the 8‑char label into the new node
+    strcpy(n->vertexName, name);
+    n->edge = NULL;
+    return n;
+}
+
+/*
+    Purpose: Initializes an empty List.
+    Returns: void
+    @param  : l — pointer to the List to initialize
+    Pre-condition:
+             - l must not be NULL.
+    Post-condition:
+             - l->head and l->tail are set to NULL.
+*/
+void initList(List* l) {
+    l->head = NULL;
+    l->tail = NULL;
+}
+
+/*
+    Purpose: Appends a new node with given name to the end of the list.
+    Returns: void
+    @param  : l    — pointer to the List to modify
+    @param  : name — vertex name to append
+    Pre-condition:
+             - l must not be NULL.
+    Post-condition:
+             - A new Node is created and added at the tail of *l.
+             - tail updated to point to the new node.
+*/
+void appendNode(List* l, strName name) {
+    Node* n = createNode(name);
+    if (l->head == NULL) {
+        // first node in this adjacency list
+        l->head = l->tail = n;
+    } else {
+        // link after the current tail
+        l->tail->edge = n;
+        l->tail = n;
+    }
+}
+
+/*
+    Purpose: Frees all nodes in a single adjacency list.
+    Returns: void
+    @param  : l — pointer to the List whose nodes will be freed
+    Pre-condition:
+             - l must not be NULL.
+    Post-condition:
+             - All Node structs in the list are freed.
+             - The List struct itself remains (but its nodes are gone).
+*/
+void freeList(List* l) {
+    Node* cur = l->head;
+    while (cur) {
+        Node* temp = cur;
+        cur = cur->edge;
+        free(temp);
+    }
+}
+
+/*
+    Purpose: Allocates and initializes a Graph with a given number of vertices.
+    Returns: Pointer to the newly created Graph; NULL on allocation failure.
+    @param  : numVertices — number of vertices in the graph
+    Pre-condition:
+             - numVertices ≥ 0 and ≤ MAX_VERTICES.
+    Post-condition:
+             - Graph* is malloc’d.
+             - adjList array is calloc’d and each List initialized.
+             - On failure, allocated memory is freed and NULL is returned.
+*/
+Graph* createGraph(int numVertices) {
+    Graph* g = malloc(sizeof(Graph));
+    if (!g) {
+        fprintf(stderr, "Error: MEMORY ALLOCATION FAILED!\n");
+        return NULL;
+    }
+
+    g->numVertices = numVertices;
+    // one contiguous block of List structs
+    g->adjList = calloc(numVertices, sizeof(List));
+    if (!g->adjList) {
+        fprintf(stderr, "Error: MEMORY ALLOCATION FAILED!\n");
+        free(g);
+        return NULL;
+    }
+
+    // explicitly clear head/tail for each list
+    for (int i = 0; i < numVertices; i++) {
+        initList(&g->adjList[i]);
+    }
     return g;
 }
 
 /*
-    Purpose: Assigns a vertex name to the next available index in the graph, or returns an existing index.
-    Returns: Index of the vertex in the graph’s vertexNames array.
-    @param  : g         - pointer to the Graph
-    @param  : name      - vertex name to assign
-    @param  : nextIndex - pointer to the next available index in the vertexNames array
+    Purpose: Adds a directed edge from one vertex to another by name.
+    Returns: void
+    @param  : g    — pointer to the Graph
+    @param  : from — name of the source vertex
+    @param  : to   — name of the destination vertex
     Pre-condition:
              - g must not be NULL.
-             - name must be a valid, null-terminated string of <= 8 characters.
-             - *nextIndex must be within bounds (i.e., < g->numVertices).
+             - Vertex named 'from' must already be at head of one List.
     Post-condition:
-             - If the name exists, its existing index is returned.
-             - If it's new, it is assigned to the next index and that index is returned.
-             - *nextIndex is incremented.
-             - Exits with an error if too many unique vertices are added.
+             - If 'from' is found, a new node with 'to' is appended to its list.
+             - On failure, prints an error and exits.
 */
-int assignVertex(Graph* g, strName name, int* nextIndex) {
-    int idx = getVertexIndex(g, name);
-    if (idx != -1) return idx;
-
-    if (*nextIndex >= g->numVertices) {
-        fprintf(stderr, "Error: Too many vertices.\n");
-        exit(1);
-    }
-
-    int assignedIndex = *nextIndex;
-    strcpy(g->vertexNames[assignedIndex], name);
-    (*nextIndex)++;
-    return assignedIndex;
-}
-
-/*
-    Purpose: Returns the index of a vertex name in the graph’s vertexNames array.
-    Returns: Index of the vertex if found; -1 if not found.
-    @param  : g    - pointer to the Graph
-    @param  : name - name of the vertex to search for
-    Pre-condition:
-             - g must not be NULL.
-             - name must be a valid, null-terminated string.
-    Post-condition:
-             - Returns the index if the name exists; -1 otherwise.
-*/
-int getVertexIndex(Graph* g, strName name) {
-    for (int i = 0; i < g->numVertices; i++) {
-        if (strcmp(g->vertexNames[i], name) == 0) {
-            return i;
+void addEdge(Graph* g, strName from, strName to) {
+    int i = 0, found = 0;
+    // scan through each list’s head for the 'from' label
+    while (i < g->numVertices && !found) {
+        if (g->adjList[i].head &&
+            strcmp(g->adjList[i].head->vertexName, from) == 0) {
+            appendNode(&g->adjList[i], to);
+            found = 1;
+        } else {
+            i++;
         }
     }
-    return -1;
-}
 
-/*
-    Purpose: Adds an undirected edge between two vertices in the graph.
-    Returns: void
-    @param  : g    - pointer to the Graph
-    @param  : src  - source vertex name
-    @param  : dest - destination vertex name
-    Pre-condition:
-             - g must not be NULL.
-             - Both src and dest must already exist in g->vertexNames.
-    Post-condition:
-             - If both vertices exist, sets adjMatrix[src][dest] and adjMatrix[dest][src] to 1.
-             - If either vertex is missing, an error message is printed.
-*/
-void addEdge(Graph* g, strName src, strName dest) {
-    int i = getVertexIndex(g, src);
-    int j = getVertexIndex(g, dest);
-
-    if (i == -1 || j == -1) {
-        fprintf(stderr, "One of the vertex IDs is not found.\n");
-    } else {
-        g->adjMatrix[i][j] = 1;
-        g->adjMatrix[j][i] = 1;
+    if (!found) {
+        fprintf(stderr, "Vertex '%s' not found in graph.\n", from);
+        exit(1);
     }
 }
 
 /*
-    Purpose: Frees all memory associated with the graph.
-    Returns: void
-    @param  : g - pointer to the Graph to free
+    Purpose: Frees an entire Graph, including all adjacency lists and the Graph struct.
+    Returns: NULL
+    @param  : g — pointer to the Graph to free
     Pre-condition:
              - g must not be NULL.
     Post-condition:
-             - All dynamically allocated memory inside the graph is freed.
-             - The pointer g itself is freed.
+             - All adjacency-list nodes are freed.
+             - adjList array and Graph struct are freed.
+             - Returns NULL so caller can safely do: g = freeGraph(g);
 */
-void freeGraph(Graph* g) {
+Graph* freeGraph(Graph* g) {
+    // free each list’s nodes
     for (int i = 0; i < g->numVertices; i++) {
-        free(g->adjMatrix[i]);
+        freeList(&g->adjList[i]);
     }
-    free(g->adjMatrix);
-    free(g->vertexNames);
+    // free the array of lists, then the graph itself
+    free(g->adjList);
     free(g);
+    return NULL;
 }

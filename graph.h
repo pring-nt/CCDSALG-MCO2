@@ -9,20 +9,35 @@ GROUP NUMBER : 45
 #define GRAPH_H_
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #define MAX_LABEL_LEN (9)
+#define MAX_FILE_NAME_LEN (24)
 
 typedef char strName[MAX_LABEL_LEN];  // type for vertex names
+typedef char strFile[MAX_FILE_NAME_LEN];
+
+typedef struct _Node {
+    strName vertexName;
+    struct _Node* edge;
+} Node;
+
+typedef struct _List {
+    Node* head;
+    Node* tail;
+} List;
 
 typedef struct _Graph {
     int numVertices;      // number of vertices in the graph
-    strName* vertexNames; // array of vertex names (labels)
-    int** adjMatrix;      // adjacency matrix (2D array of ints)
+    List* adjList;       // array of Lists
 } Graph;
 
+int ReadInputFile(strFile, Graph**);
+Node* createNode(strName);
+void initList(List*);
+void appendNode(List* , strName);
+void freeList(List*) ;
 Graph* createGraph(int);
-int assignVertex(Graph* g, strName name, int* nextIndex);
-int getVertexIndex(Graph*, strName); // Helper function to find a vertex name
 void addEdge(Graph*, strName, strName);
-void freeGraph(Graph*);
+Graph* freeGraph(Graph*);
 #endif
