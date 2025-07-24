@@ -1,4 +1,4 @@
-#include "linkedList.h"
+#include "graph.h"
 
 /*
     Purpose: Prints the adjacency‐list representation of the graph to stdout.
