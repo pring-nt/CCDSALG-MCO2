@@ -443,3 +443,151 @@ int BFS(const Graph* g, const strName startName, strName traversal[]) {
     free(queue);
     return travIndex;
 }
+
+/**
+    Purpose: Generates a vertex degree report file (<input>-DEGREE.TXT).
+    Returns: void
+    @param  : g             - pointer to the Graph
+    @param  : inputFilename - name of the input file (e.g., "G.TXT")
+    Pre-condition:
+             - g must not be NULL and must contain valid graph data
+             - inputFilename must be a valid null-terminated string
+*/
+void ProduceDegreeFile(const Graph* g, const char* inputFilename) {
+    char outputFilename[MAX_FILE_NAME_LEN];
+    FILE* fp = NULL;
+    int i = 0;
+    
+    // Copy input filename and remove extension
+    strcpy(outputFilename, inputFilename);
+    while (outputFilename[i] != '\0' && outputFilename[i] != '.') {
+        i++;
+    }
+    outputFilename[i] = '\0'; // Truncate at '.' or end
+    
+    // Append suffix
+    strcat(outputFilename, "-DEGREE.TXT");
+    
+    fp = fopen(outputFilename, "w");
+    if (fp != NULL) {
+        for (i = 0; i < g->numVertices; i++) {
+            int degree = 0;
+            Node* neighbor = g->adjList[i].head->edge;
+            while (neighbor != NULL) {
+                degree++;
+                neighbor = neighbor->edge;
+            }
+            fprintf(fp, "%s %d\n", g->adjList[i].head->vertexName, degree);
+        }
+        fclose(fp);
+    }
+}
+
+
+/**
+    Purpose: Generates an adjacency matrix file (<input>-MATRIX.TXT).
+    Returns: void
+    @param  : g             - pointer to the Graph
+    @param  : inputFilename - name of the input file
+    Pre-condition:
+             - g must not be NULL and must contain valid graph data
+             - inputFilename must be a valid null-terminated string
+*/
+void ProduceMatrixFile(const Graph* g, const char* inputFilename) {
+    char outputFilename[MAX_FILE_NAME_LEN];
+    FILE* fp = NULL;
+    int i = 0;
+    
+    // Copy input filename and remove extension
+    strcpy(outputFilename, inputFilename);
+    while (outputFilename[i] != '\0' && outputFilename[i] != '.') {
+        i++;
+    }
+    outputFilename[i] = '\0'; // Truncate at '.' or end
+    
+    // Append suffix
+    strcat(outputFilename, "-MATRIX.TXT");
+    
+    fp = fopen(outputFilename, "w");
+    if (fp != NULL) {
+        // Print header row 
+        fprintf(fp, "    ");
+        for (i = 0; i < g->numVertices; i++) {
+            fprintf(fp, "%-8s", g->adjList[i].head->vertexName);
+        }
+        fprintf(fp, "\n");
+        
+        // Print matrix rows
+        for (i = 0; i < g->numVertices; i++) {
+            fprintf(fp, "%-4s", g->adjList[i].head->vertexName);
+            for (int j = 0; j < g->numVertices; j++) {
+                int connected = 0;
+                Node* neighbor = g->adjList[i].head->edge;
+                
+                // Check if connected (without early break)
+                while (neighbor != NULL && !connected) {
+                    if (strcmp(neighbor->vertexName, g->adjList[j].head->vertexName) == 0) {
+                        connected = 1;
+                    }
+                    neighbor = neighbor->edge;
+                }
+                fprintf(fp, "%-8d", connected);
+            }
+            fprintf(fp, "\n");
+        }
+        fclose(fp);
+    }
+}
+
+
+
+/**
+    Purpose: Generates a DFS traversal file (<input>-DFS.TXT).
+    Returns: void
+    @param  : g             - pointer to the Graph
+    @param  : inputFilename - name of the input file
+    @param  : startVertex   - name of the starting vertex
+    Pre-condition:
+             - g must not be NULL and must contain valid graph data
+             - startVertex must exist in the graph
+             - inputFilename must be a valid null-terminated string
+*/
+void ProduceDFSFile(const Graph* g, const char* inputFilename, const strName startVertex) {
+    char outputFilename[MAX_FILE_NAME_LEN];
+    FILE* fp = NULL;
+    int i = 0;
+    int vertexExists = 0;   // Flag to check if vertex exists
+    
+    // Check if vertex exists (without early break)
+    for (i = 0; i < g->numVertices; i++) {
+        if (strcmp(g->adjList[i].head->vertexName, startVertex) == 0) {
+            vertexExists = 1;
+        }
+    }
+    
+    if (vertexExists) {
+        // Copy input filename and remove extension 
+        strcpy(outputFilename, inputFilename);
+        i = 0;
+        while (outputFilename[i] != '\0' && outputFilename[i] != '.') {
+            i++;
+        }
+        outputFilename[i] = '\0'; // Truncate at '.' or end
+        
+        // Append suffix
+        strcat(outputFilename, "-DFS.TXT");
+        
+        fp = fopen(outputFilename, "w");
+        if (fp != NULL) {
+            strName traversal[g->numVertices];
+            int vertexCount = DFS(g, startVertex, traversal);
+            for (i = 0; i < vertexCount; i++) {
+                fprintf(fp, "%s", traversal[i]);
+                if (i < vertexCount - 1) {
+                    fprintf(fp, " ");
+                }
+            }
+            fclose(fp);
+        }
+    }
+}
