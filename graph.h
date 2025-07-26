@@ -45,4 +45,7 @@ int getSortedNeighbors(const Graph*, int, int[]);
 void DFSHelper(const Graph*, int, int[], strName[], int*);
 int DFS(const Graph*, const strName, strName[]);
 int BFS(const Graph*, const strName, strName[]);
+void ProduceDegreeFile(const Graph* g, const char* inputFilename);
+void ProduceMatrixFile(const Graph* g, const char* inputFilename);
+void ProduceDFSFile(const Graph* g, const char* inputFilename, const strName startVertex);
 #endif
