@@ -36,8 +36,13 @@ int ReadInputFile(strFile, Graph**);
 Node* createNode(strName);
 void initList(List*);
 void appendNode(List* , strName);
-void freeList(List*) ;
+void freeList(List*);
 Graph* createGraph(int);
 void addEdge(Graph*, strName, strName);
 Graph* freeGraph(Graph*);
+int getVertexIndex(const Graph*, const strName);
+int getSortedNeighbors(const Graph*, int, int[]);
+void DFSHelper(const Graph*, int, int[], strName[], int*);
+int DFS(const Graph*, const strName, strName[]);
+int BFS(const Graph*, const strName, strName[]);
 #endif

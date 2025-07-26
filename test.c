@@ -1,5 +1,4 @@
-#include "graph.h"
-
+#include "graph.c"
 /*
     Purpose: Prints the adjacency‐list representation of the graph to stdout.
     Returns: void
@@ -42,6 +41,30 @@ int main() {
         printf("File Z.TXT not found.\n");
         exit(1);
     }
+
+    strName vertex;
+    printf("Input start vertex for traversal: ");
+    scanf("%s", vertex);
+
+    strName dfs[g->numVertices];
+    strName bfs[g->numVertices];
+
+    
+    int dfsIndex = DFS(g, vertex, dfs);
+    int bfsIndex = BFS(g, vertex, bfs);
+
+    int i;
+    printf("BFS: \n");
+    for(i = 0; i < bfsIndex; i++) {
+        printf("%s ", bfs[i]);
+    }
+    printf("\n");
+
+    printf("DFS: \n");
+    for(i = 0; i < dfsIndex; i++) {
+        printf("%s ", dfs[i]);
+    }
+    printf("\n");
 
     printGraph(g);
     g = freeGraph(g);
