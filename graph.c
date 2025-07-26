@@ -445,6 +445,127 @@ int BFS(const Graph* g, const strName startName, strName traversal[]) {
 }
 
 /**
+    Purpose: Generates a file that contains the set of vertices and the set of edges. (<input>-SET.TXT).
+    Returns: void
+    @param  : g             - pointer to the Graph
+    @param  : inputFilename - name of the input file (e.g., "G.TXT")
+    Pre-condition:
+             - g must not be NULL and must contain valid graph data
+			 - g is an UNDIRECTED graph.
+             - inputFilename must be a valid null-terminated string
+*/
+
+void ProduceSetsFile(const Graph* g, const char* inputFilename)
+{
+    char outputFilename[MAX_FILE_NAME_LEN];
+    FILE* fp = NULL;
+    int i = 0;
+	int firstPrinted = 1;
+    
+    // Copy input filename and remove extension
+    strcpy(outputFilename, inputFilename);
+    while (outputFilename[i] != '\0' && outputFilename[i] != '.') {
+        i++;
+    }
+    outputFilename[i] = '\0'; // Truncate at '.' or end
+    
+    // Append suffix
+    strcat(outputFilename, "-SET.TXT");
+
+    fp = fopen(outputFilename, "w");
+
+    if (fp != NULL)
+	{
+		int count = g->numVertices;	
+		int sortedVertex[count];
+ 
+        for (i = 0; i < count; i++) 
+            sortedVertex[i] = i;		
+
+		// selection sort for solely the vertices
+		for (i = 0; i < count - 1; i++) 
+		{
+			int min = i;
+			for (int j = i + 1; j < count; j++) 
+			{
+				const char* nameJ = g->adjList[sortedVertex[j]].head->vertexName;
+				const char* nameMin = g->adjList[sortedVertex[min]].head->vertexName;
+
+				if (strcmp(nameJ, nameMin) < 0) 
+					min = j; 
+			}
+
+			if (min != i) 
+			{
+				int temp = sortedVertex[i];
+				sortedVertex[i] = sortedVertex[min];
+				sortedVertex[min] = temp;
+			}
+		}
+			
+		// Printing the set of vertices.
+		fprintf(fp, "V(G)={");
+
+		for (i = 0; i < g->numVertices; i++)
+		{
+			if (firstPrinted)	
+				firstPrinted = 0;	
+			else
+				fprintf(fp, ",");	
+				
+			fprintf(fp, "%s", g->adjList[sortedVertex[i]].head->vertexName);	
+		}
+		fprintf(fp, "}\n");
+
+		// Printing the set of edges.
+		fprintf(fp, "E(G)={");
+
+		int visited[count][count];
+		memset(visited, 0, sizeof(visited)); // sets all values of adjacency matrix to 0
+
+		firstPrinted = 1;
+
+		for (i = 0; i < count; i++)
+		{	
+			Node* neighbor = g->adjList[sortedVertex[i]].head->edge;
+
+			if (neighbor != NULL)
+			{	
+				int sortedNeighbors[count];	
+				int neighborCount = getSortedNeighbors(g, sortedVertex[i], sortedNeighbors);
+
+				for (int j = 0; j < neighborCount; j++)
+				{
+					if (visited[sortedVertex[i]][sortedNeighbors[j]] == 0)
+					{
+						if (firstPrinted)	
+							firstPrinted = 0;	
+						else
+							fprintf(fp, ",");						
+
+						fprintf(fp, "(%s,", g->adjList[sortedVertex[i]].head->vertexName);		
+						fprintf(fp, "%s)", g->adjList[sortedNeighbors[j]].head->vertexName);	
+
+						visited[sortedVertex[i]][sortedNeighbors[j]] = 1; 
+						visited[sortedNeighbors[j]][sortedVertex[i]] = 1; 
+					}	
+
+				}
+			}	
+				
+
+		}		
+	
+		fprintf(fp, "}\n");
+
+		fclose(fp);
+	}
+}
+
+
+
+
+/**
     Purpose: Generates a vertex degree report file (<input>-DEGREE.TXT).
     Returns: void
     @param  : g             - pointer to the Graph
@@ -482,6 +603,60 @@ void ProduceDegreeFile(const Graph* g, const char* inputFilename) {
         fclose(fp);
     }
 }
+
+/**
+    Purpose: Generates a file that represents an adjacency list of the graph (<input>-LIST.TXT).
+    Returns: void
+    @param  : g             - pointer to the Graph
+    @param  : inputFilename - name of the input file
+    Pre-condition:
+             - g must not be NULL and must contain valid graph data
+             - inputFilename must be a valid null-terminated string
+*/
+void ProduceListFile(const Graph* g, const char* inputFilename) {
+    char outputFilename[MAX_FILE_NAME_LEN];
+    FILE* fp = NULL;
+    int i = 0;
+    
+    // Copy input filename and remove extension
+    strcpy(outputFilename, inputFilename);
+    while (outputFilename[i] != '\0' && outputFilename[i] != '.') {
+        i++;
+    }
+    outputFilename[i] = '\0'; // Truncate at '.' or end
+    
+    // Append suffix
+    strcat(outputFilename, "-LIST.TXT");
+    
+    fp = fopen(outputFilename, "w");
+
+    if (fp != NULL) 
+	{
+		for (i = 0; i < g->numVertices; i++)
+		{
+			// vertex	
+			fprintf(fp, "%s", g->adjList[i].head->vertexName);
+
+			// edges
+			Node* neighbor = g->adjList[i].head->edge;
+
+			while (neighbor != NULL)
+			{
+				fprintf(fp, "->");
+
+				fprintf(fp,"%s", neighbor->vertexName);	
+
+				neighbor = neighbor->edge;			
+			}
+
+			fprintf(fp, "->\\\n");
+		}	
+
+        fclose(fp);
+    }
+}
+
+
 
 
 /**
@@ -536,6 +711,63 @@ void ProduceMatrixFile(const Graph* g, const char* inputFilename) {
             fprintf(fp, "\n");
         }
         fclose(fp);
+    }
+}
+
+/**
+    Purpose: Generates a BFS traversal file (<input filename>-BFS.TXT).
+    Returns: void
+    @param  : g             - pointer to the Graph
+    @param  : inputFilename - name of the input file
+    @param  : startVertex   - name of the starting vertex
+
+    Pre-condition:
+             - g must not be NULL and must contain valid graph data
+             - startVertex must exist in the graph
+             - inputFilename must be a valid null-terminated string
+*/
+void ProduceBFSFile(const Graph* g, const char* inputFilename, const strName startVertex) {
+    char outputFilename[MAX_FILE_NAME_LEN];
+    FILE* fp = NULL;
+    int vertexExists = 0;   // Flag to check if vertex exists
+    
+    // If there exists at least one vertex inside the set 
+    for (int i = 0; i < g->numVertices; i++) 
+	{
+        if (strcmp(g->adjList[i].head->vertexName, startVertex) == 0) {
+            vertexExists = 1;
+        }
+    }
+    
+    if (vertexExists) 
+	{
+		// Copy input filename and remove extension
+        strcpy(outputFilename, inputFilename);
+
+		int i;
+        for (i = 0; outputFilename[i] != '\0' && outputFilename[i] != '.'; i++);
+
+        outputFilename[i] = '\0';
+
+        // Append suffix
+        strcat(outputFilename, "-BFS.TXT");
+
+        fp = fopen(outputFilename, "w");
+        if (fp != NULL) 
+		{
+            strName traversal[g->numVertices];
+            int vertexCount = BFS(g, startVertex, traversal);
+
+            for (i = 0; i < vertexCount; i++) 
+			{
+                fprintf(fp, "%s", traversal[i]);
+
+                if (i < vertexCount - 1) 
+                    fprintf(fp, " ");
+            }
+
+            fclose(fp);
+        }
     }
 }
 
