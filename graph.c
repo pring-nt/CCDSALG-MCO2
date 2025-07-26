@@ -424,7 +424,8 @@ int BFS(const Graph* g, const strName startName, strName traversal[]) {
     while (front < rear) {
         int v = queue[front];
         front++;
-        strcpy(traversal[travIndex++], g->adjList[v].head->vertexName);
+        strcpy(traversal[travIndex], g->adjList[v].head->vertexName);
+        travIndex++;
         // get sorted neighbor indices
         int neighbors[g->numVertices];
         int cnt = getSortedNeighbors(g, v, neighbors);
