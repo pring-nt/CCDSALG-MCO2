@@ -1,0 +1,9 @@
+8
+Clark -1
+Hal -1
+Bruce -1
+Diana -1
+Wally -1
+Gardner -1
+Lois -1
+Lex -1
