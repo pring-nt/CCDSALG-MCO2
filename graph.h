@@ -32,6 +32,11 @@ typedef struct _Graph {
     List* adjList;       // array of Lists
 } Graph;
 
+typedef struct _VertexDegree{
+    char name[MAX_LABEL_LEN];
+    int degree;
+} VertexDegree;
+
 int ReadInputFile(strFile, Graph**);
 Node* createNode(strName);
 void initList(List*);
@@ -50,6 +55,7 @@ void ProduceSetsFile(const Graph* g, const char* inputFilename);
 void ProduceDegreeFile(const Graph* g, const char* inputFilename);
 
 void ProduceListFile(const Graph* g, const char* inputFilename);
+int matrixHelper(const Graph* g);
 void ProduceMatrixFile(const Graph* g, const char* inputFilename);
 
 void ProduceBFSFile(const Graph* g, const char* inputFilename, const strName startVertex);
