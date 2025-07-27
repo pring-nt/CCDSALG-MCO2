@@ -555,15 +555,12 @@ void ProduceSetsFile(const Graph* g, const char* inputFilename)
 				
 
 		}		
-	
+
 		fprintf(fp, "}\n");
 
 		fclose(fp);
 	}
 }
-
-
-
 
 /**
     Purpose: Generates a vertex degree report file (<input>-DEGREE.TXT).
@@ -576,30 +573,60 @@ void ProduceSetsFile(const Graph* g, const char* inputFilename)
 */
 void ProduceDegreeFile(const Graph* g, const char* inputFilename) {
     char outputFilename[MAX_FILE_NAME_LEN];
-    FILE* fp = NULL;
     int i = 0;
+    int j = 0;
     
-    // Copy input filename and remove extension
+    // Create filename
     strcpy(outputFilename, inputFilename);
     while (outputFilename[i] != '\0' && outputFilename[i] != '.') {
         i++;
     }
-    outputFilename[i] = '\0'; // Truncate at '.' or end
-    
-    // Append suffix
+    outputFilename[i] = '\0';  // Truncate at '.' or end
     strcat(outputFilename, "-DEGREE.TXT");
     
-    fp = fopen(outputFilename, "w");
+    // Open file for writing
+    FILE* fp = fopen(outputFilename, "w");
+    
+    // Process data
     if (fp != NULL) {
+
+        // Array of vertex-degree pairs
+        VertexDegree vd[g->numVertices];
+        
+        // Calculate degrees
         for (i = 0; i < g->numVertices; i++) {
-            int degree = 0;
+            strcpy(vd[i].name, g->adjList[i].head->vertexName);
+            vd[i].degree = 0;
+            
             Node* neighbor = g->adjList[i].head->edge;
-            while (neighbor != NULL) {
-                degree++;
+            int neighborExists = (neighbor != NULL);
+            while (neighborExists) {
+                vd[i].degree++;
                 neighbor = neighbor->edge;
+                neighborExists = (neighbor != NULL);
             }
-            fprintf(fp, "%s %d\n", g->adjList[i].head->vertexName, degree);
         }
+        
+        // Sort
+        int sortingComplete = 0;
+        for (i = 0; i < g->numVertices - 1 && !sortingComplete; i++) {
+            sortingComplete = 1;  // Flagger
+            
+            for (j = 0; j < g->numVertices - i - 1; j++) {
+                int shouldSwap = (strcmp(vd[j].name, vd[j+1].name) > 0);
+                if (shouldSwap) {
+                    VertexDegree temp = vd[j];
+                    vd[j] = vd[j+1];
+                    vd[j+1] = temp;
+                    sortingComplete = 0;
+                }
+            }
+        }
+        
+        // Print sorted vertex degrees
+        for (i = 0; i < g->numVertices; i++) {
+            fprintf(fp, "%s %d\n", vd[i].name, vd[i].degree);
+        } 
         fclose(fp);
     }
 }
@@ -656,8 +683,27 @@ void ProduceListFile(const Graph* g, const char* inputFilename) {
     }
 }
 
+/**
+    Purpose: A helper function for ProduceMatrixFile for proper spacing
+    Returns: Maximum length of vertex names plus padding
+    @param  : g             - pointer to the Graph
+    Pre-condition:
+             - g must not be NULL and must contain valid graph data
+*/
 
+int matrixHelper(const Graph* g)
+{
+    int maxNameLen = 0;
+    for (int i = 0; i < g->numVertices; i++) {
+        int currentLen = strlen(g->adjList[i].head->vertexName);
+        if (currentLen > maxNameLen) {
+            maxNameLen = currentLen;
+        }
+    }
+    maxNameLen += 2; // Adds padding
 
+    return maxNameLen;
+}
 
 /**
     Purpose: Generates an adjacency matrix file (<input>-MATRIX.TXT).
@@ -669,44 +715,50 @@ void ProduceListFile(const Graph* g, const char* inputFilename) {
              - inputFilename must be a valid null-terminated string
 */
 void ProduceMatrixFile(const Graph* g, const char* inputFilename) {
-    char outputFilename[MAX_FILE_NAME_LEN];
-    FILE* fp = NULL;
+    char outputFilename[MAX_FILE_NAME_LEN] = {0};
     int i = 0;
     
-    // Copy input filename and remove extension
+    // Process filename
     strcpy(outputFilename, inputFilename);
     while (outputFilename[i] != '\0' && outputFilename[i] != '.') {
         i++;
     }
-    outputFilename[i] = '\0'; // Truncate at '.' or end
-    
-    // Append suffix
+    outputFilename[i] = '\0';
     strcat(outputFilename, "-MATRIX.TXT");
     
-    fp = fopen(outputFilename, "w");
+    // 2. Open file 
+    FILE* fp = fopen(outputFilename, "w");
+    
+    // Process data
     if (fp != NULL) {
-        // Print header row 
-        fprintf(fp, "    ");
+
+        int maxNameLen = matrixHelper(g);
+        
+        /* Print header row */
+        fprintf(fp, "%*s", maxNameLen, "");
         for (i = 0; i < g->numVertices; i++) {
-            fprintf(fp, "%-8s", g->adjList[i].head->vertexName);
+            fprintf(fp, "%-*s", maxNameLen, g->adjList[i].head->vertexName);
         }
         fprintf(fp, "\n");
         
-        // Print matrix rows
+        /* Print matrix rows */
         for (i = 0; i < g->numVertices; i++) {
-            fprintf(fp, "%-4s", g->adjList[i].head->vertexName);
+            fprintf(fp, "%-*s", maxNameLen, g->adjList[i].head->vertexName);
+            
             for (int j = 0; j < g->numVertices; j++) {
                 int connected = 0;
                 Node* neighbor = g->adjList[i].head->edge;
+                int neighborExists = (neighbor != NULL);
                 
-                // Check if connected (without early break)
-                while (neighbor != NULL && !connected) {
+                /* Check connection */
+                while (neighborExists) {
                     if (strcmp(neighbor->vertexName, g->adjList[j].head->vertexName) == 0) {
                         connected = 1;
                     }
                     neighbor = neighbor->edge;
+                    neighborExists = (neighbor != NULL);
                 }
-                fprintf(fp, "%-8d", connected);
+                fprintf(fp, "%-*d", maxNameLen, connected);
             }
             fprintf(fp, "\n");
         }
@@ -771,8 +823,6 @@ void ProduceBFSFile(const Graph* g, const char* inputFilename, const strName sta
     }
 }
 
-
-
 /**
     Purpose: Generates a DFS traversal file (<input>-DFS.TXT).
     Returns: void
@@ -786,7 +836,6 @@ void ProduceBFSFile(const Graph* g, const char* inputFilename, const strName sta
 */
 void ProduceDFSFile(const Graph* g, const char* inputFilename, const strName startVertex) {
     char outputFilename[MAX_FILE_NAME_LEN];
-    FILE* fp = NULL;
     int i = 0;
     int vertexExists = 0;   // Flag to check if vertex exists
     
@@ -809,7 +858,7 @@ void ProduceDFSFile(const Graph* g, const char* inputFilename, const strName sta
         // Append suffix
         strcat(outputFilename, "-DFS.TXT");
         
-        fp = fopen(outputFilename, "w");
+        FILE* fp = fopen(outputFilename, "w");
         if (fp != NULL) {
             strName traversal[g->numVertices];
             int vertexCount = DFS(g, startVertex, traversal);
