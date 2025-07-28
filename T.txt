@@ -1,2 +1,6 @@
-1
-Clark -1
+5
+A B -1
+B A C E -1
+C B D -1
+D C -1
+E B -1

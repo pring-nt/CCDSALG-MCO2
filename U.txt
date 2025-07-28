@@ -1,4 +1,4 @@
-8
+10
 Clark -1
 Hal -1
 Bruce -1
@@ -7,3 +7,5 @@ Wally -1
 Gardner -1
 Lois -1
 Lex -1
+Barbara -1
+Jaime -1

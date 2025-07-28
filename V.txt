@@ -1,8 +1,21 @@
-9
-Clark Lois Lex Gardner -1
-Lex Bruce Diana -1
-Bruce Jason -1
+20
+Clark Lois -1
+Lois Clark Lex Gardner -1
+Lex Lois Gardner Bruce -1
 Miles -1
-Lois Gardner Diana -1
-Miku -1 
-
+Gardner Lois Lex Diana -1
+Diana Gardner -1
+Bruce Lex Jinu Jason -1
+Jason Bruce BRUCE -1
+BRUCE Jason -1
+Maria -1
+Mystery -1
+Jinu Bruce Rumi Gwima -1
+Rumi Jinu Zoey -1
+Gwima Jinu Baby -1
+Zoey Rumi Baby Doctor -1
+Baby Gwima Zoey -1
+Doctor Zoey -1
+Miku -1
+Mira -1
+Micah -1
